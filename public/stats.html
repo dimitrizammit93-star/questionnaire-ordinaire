@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Résultats ordinaire</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.wrap{max-width:900px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.kpi b{display:block;font-size:28px;line-height:1.1}
+.kpi span{color:var(--muted);font-size:13px}
+.filtres{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:12px}
+td.n{font-weight:700;border-radius:6px}
+.scroll{overflow-x:auto}
+.b{margin:6px 0}
+.b .l{display:flex;justify-content:space-between;font-size:14px;margin-bottom:3px}
+.b .l em{color:var(--muted);font-style:normal}
+.b .t{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.b .t i{display:block;height:100%;background:var(--accent)}
+ul.txt{margin:0;padding-left:18px;font-size:14px}
+ul.txt li{margin:6px 0}
+ul.txt small{color:var(--muted)}
+.leg{color:var(--muted);font-size:12px;margin-top:8px}
+input[type=password]{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:10px;font:inherit;background:transparent;color:var(--ink);margin:10px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="badge">6e</div>
+    <div><h1>Résultats du questionnaire ordinaire</h1><p class="sub" id="maj">Accès réservé au bureau RHL</p></div>
+  </header>
+  <main id="app"></main>
+</div>
+<script src="config.js"></script>
+<script>
+const app = document.getElementById("app");
+let DATA = [], FILTRE = "Tous";
+const Q = {}; SECTIONS.forEach(s => s.qs.forEach(q => Q[q.id] = q));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const moy = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const fmt = (v, d = 1) => v == null ? "–" : v.toFixed(d).replace(".", ",");
+function couleur(v, max = 5){ if (v == null) return ""; const r = v / max; return r >= .7 ? "var(--ok)" : r >= .5 ? "var(--warn)" : "var(--bad)" }
+
+function login(msg){
+  app.innerHTML = `<section class="card"><h2>Code d'accès</h2><input type="password" id="code" placeholder="Code" autocomplete="current-password"><button class="btn pri" id="go" style="width:100%">Voir les résultats</button>${msg ? `<div class="err">${esc(msg)}</div>` : ""}</section>`;
+  const go = () => charger(document.getElementById("code").value);
+  document.getElementById("go").onclick = go;
+  document.getElementById("code").onkeydown = e => { if (e.key === "Enter") go() };
+}
+
+async function charger(code){
+  try {
+    const r = await fetch("/api/reponses", { headers: { "x-code": code } });
+    if (r.status === 401) return login("Code incorrect.");
+    if (!r.ok) throw new Error(r.status);
+    DATA = await r.json();
+    try { sessionStorage.setItem("code", code) } catch {}
+    document.getElementById("maj").textContent = "Mis à jour le " + new Date().toLocaleString("fr-FR");
+    rendre();
+  } catch (e) { login("Erreur de chargement (" + e.message + ")."); }
+}
+
+function barres(q, rows){
+  const n = rows.filter(r => r[q.id] != null).length;
+  if (!n) return "<p class='intro'>Pas encore de réponse.</p>";
+  const cpt = {}; q.o.forEach(o => cpt[o] = 0);
+  rows.forEach(r => [].concat(r[q.id] ?? []).forEach(v => { if (v in cpt) cpt[v]++ }));
+  const ordre = q.type === "check" ? Object.entries(cpt).sort((a, b) => b[1] - a[1]) : Object.entries(cpt);
+  return ordre.map(([o, c]) => { const p = c / n * 100; return `<div class="b"><div class="l"><span>${esc(o)}</span><em>${c} · ${Math.round(p)} %</em></div><div class="t"><i style="width:${p}%"></i></div></div>` }).join("")
+    + `<p class="leg">${n} répondant${n > 1 ? "s" : ""}${q.type === "check" ? " · plusieurs choix possibles" : ""}</p>`;
+}
+
+function comparatif(){
+  const centres = CENTRES.filter(c => DATA.some(r => r.cs === c));
+  let h = `<div class="scroll"><table><tr><th>Critère</th>${centres.map(c => `<th>${esc(c.replace("-les-Moulineaux", ""))}</th>`).join("")}<th>Tous</th></tr>`;
+  SECTIONS.find(s => s.id === "notes").qs.forEach(q => q.c.forEach(c => {
+    if (!DATA.some(r => Number.isFinite(r[q.id]?.[c]))) return;
+    const cell = rows => { const v = moy(rows.map(r => r[q.id]?.[c]).filter(Number.isFinite)); return `<td class="n" style="color:${couleur(v)}">${fmt(v)}</td>` };
+    h += `<tr><td>${esc(q.t)} · ${esc(c)}</td>${centres.map(cs => cell(DATA.filter(r => r.cs === cs))).join("")}${cell(DATA)}</tr>`;
+  }));
+  const g = rows => { const v = moy(rows.map(r => r.global).filter(Number.isFinite)); return `<td class="n" style="color:${couleur(v, 10)}">${fmt(v)}</td>` };
+  h += `<tr><td><b>Note globale /10</b></td>${centres.map(cs => g(DATA.filter(r => r.cs === cs))).join("")}${g(DATA)}</tr>`;
+  h += `<tr><td>Réponses</td>${centres.map(cs => `<td>${DATA.filter(r => r.cs === cs).length}</td>`).join("")}<td>${DATA.length}</td></tr></table></div>`;
+  return h + `<p class="leg">Moyenne sur 5 (note globale sur 10). Vert ≥ 70 %, orange ≥ 50 %, rouge en dessous.</p>`;
+}
+
+function rendre(){
+  const rows = FILTRE === "Tous" ? DATA : DATA.filter(r => r.cs === FILTRE);
+  const g = moy(rows.map(r => r.global).filter(Number.isFinite));
+  const faim = rows.filter(r => r.faim).length ? rows.filter(r => r.faim && r.faim !== "Aucun").length / rows.filter(r => r.faim).length * 100 : null;
+  const froid = rows.filter(r => r.chaud).length ? rows.filter(r => ["Rarement", "Jamais"].includes(r.chaud)).length / rows.filter(r => r.chaud).length * 100 : null;
+  let h = `<div class="filtres">${["Tous", ...CENTRES].map(c => `<button class="opt${c === FILTRE ? " on" : ""}" data-f="${esc(c)}">${esc(c)}</button>`).join("")}
+    <button class="opt" id="csv">Export CSV</button><button class="opt" id="maj2">Actualiser</button></div>
+  <div class="kpis">
+    <div class="kpi"><b>${rows.length}</b><span>réponses</span></div>
+    <div class="kpi"><b style="color:${couleur(g, 10)}">${fmt(g)}</b><span>note globale /10</span></div>
+    <div class="kpi"><b>${faim == null ? "–" : Math.round(faim) + " %"}</b><span>restent parfois sur leur faim</span></div>
+    <div class="kpi"><b>${froid == null ? "–" : Math.round(froid) + " %"}</b><span>plats rarement ou jamais chauds</span></div>
+  </div>`;
+  if (DATA.length) h += `<section class="card"><h2>Comparatif par centre</h2><p class="intro">C'est le tableau clé : il montre si l'écart vient des satellites (transport, quantités envoyées) ou des recettes elles-mêmes.</p>${comparatif()}</section>`;
+  SECTIONS.forEach(s => s.qs.forEach(q => {
+    if (["radio", "check"].includes(q.type) && q.id !== "cs") h += `<section class="card"><h2>${esc(q.t)}</h2>${barres(q, rows)}</section>`;
+    if (q.type === "text") {
+      const t = rows.filter(r => r[q.id]).slice().reverse();
+      h += `<section class="card"><h2>${esc(q.t)}</h2>${t.length ? `<ul class="txt">${t.map(r => `<li>${esc(r[q.id])} <small>· ${esc(r.cs)}</small></li>`).join("")}</ul>` : "<p class='intro'>Pas encore de réponse.</p>"}</section>`;
+    }
+  }));
+  app.innerHTML = h;
+  app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { FILTRE = b.dataset.f; rendre() });
+  document.getElementById("csv").onclick = exporter;
+  document.getElementById("maj2").onclick = () => { let c = ""; try { c = sessionStorage.getItem("code") } catch {} charger(c) };
+}
+
+function exporter(){
+  const cols = ["date"];
+  SECTIONS.forEach(s => s.qs.forEach(q => q.type === "notes" ? q.c.forEach(c => cols.push(q.t + " - " + c)) : cols.push(q.t)));
+  const lignes = DATA.map(r => {
+    const l = [new Date(r.ts).toLocaleString("fr-FR")];
+    SECTIONS.forEach(s => s.qs.forEach(q => {
+      if (q.type === "notes") q.c.forEach(c => l.push(r[q.id]?.[c] ?? ""));
+      else l.push(Array.isArray(r[q.id]) ? r[q.id].join(" | ") : (r[q.id] ?? ""));
+    }));
+    return l;
+  });
+  const csv = "﻿" + [cols, ...lignes].map(l => l.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = "questionnaire-ordinaire-" + new Date().toISOString().slice(0, 10) + ".csv";
+  a.click();
+}
+
+let c = null; try { c = sessionStorage.getItem("code") } catch {}
+c ? charger(c) : login();
+</script>
+</body>
+</html>

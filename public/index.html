@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Questionnaire ordinaire</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="badge">6e</div>
+    <div><h1>Votre avis sur l'ordinaire</h1><p class="sub">Anonyme · 5 minutes · Grenelle, Auteuil, Issy</p></div>
+  </header>
+  <div class="prog"><i id="prog"></i></div>
+  <main id="app"></main>
+</div>
+<script src="config.js"></script>
+<script>
+const R = {}; let etape = 0;
+const app = document.getElementById("app");
+const deja = (() => { try { return localStorage.getItem("ordinaire_repondu") } catch { return null } })();
+
+function visible(q){ return !q.show || (R.repas || []).includes(q.show) }
+function el(tag, cls, txt){ const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e }
+
+function pill(label, on, fn){ const b = el("button", "opt" + (on ? " on" : ""), label); b.type = "button"; b.onclick = fn; return b }
+
+function rendreQuestion(q){
+  const box = el("div", "q");
+  const t = el("div", "qt", q.t); if (q.req) { const s = el("span", "req", " *"); t.appendChild(s) }
+  box.appendChild(t);
+  if (q.type === "radio") {
+    const o = el("div", "opts");
+    q.o.forEach(x => o.appendChild(pill(x, R[q.id] === x, () => { R[q.id] = x; rendre() })));
+    box.appendChild(o);
+  } else if (q.type === "check") {
+    const o = el("div", "opts"), cur = R[q.id] || [];
+    q.o.forEach(x => o.appendChild(pill(x, cur.includes(x), () => {
+      let v = R[q.id] || [];
+      if (v.includes(x)) v = v.filter(y => y !== x);
+      else v = x === q.x ? [x] : [...v.filter(y => y !== q.x), x];
+      R[q.id] = v; rendre();
+    })));
+    box.appendChild(o);
+  } else if (q.type === "notes") {
+    const cur = R[q.id] || {};
+    q.c.forEach(c => {
+      const row = el("div", "row"); row.appendChild(el("span", "", c));
+      const s = el("div", "scale");
+      [1,2,3,4,5].forEach(n => s.appendChild(pill(String(n), cur[c] === n, () => { R[q.id] = { ...(R[q.id]||{}), [c]: n }; rendre() })));
+      row.appendChild(s); box.appendChild(row);
+    });
+  } else if (q.type === "scale10") {
+    const s = el("div", "scale10");
+    for (let n = 1; n <= 10; n++) s.appendChild(pill(String(n), R[q.id] === n, () => { R[q.id] = n; rendre() }));
+    box.appendChild(s);
+  } else {
+    const ta = el("textarea"); ta.value = R[q.id] || ""; ta.maxLength = 1000;
+    ta.oninput = () => { R[q.id] = ta.value };
+    box.appendChild(ta);
+  }
+  return box;
+}
+
+function manquants(sec){ return sec.qs.filter(q => q.req && visible(q) && (R[q.id] == null || (Array.isArray(R[q.id]) && !R[q.id].length))) }
+
+function rendre(msg){
+  const y = window.scrollY;
+  app.innerHTML = "";
+  document.getElementById("prog").style.width = (etape / SECTIONS.length * 100) + "%";
+  const sec = SECTIONS[etape];
+  const card = el("section", "card");
+  card.appendChild(el("h2", "", sec.titre));
+  if (sec.intro) card.appendChild(el("p", "intro", sec.intro));
+  sec.qs.filter(visible).forEach(q => card.appendChild(rendreQuestion(q)));
+  if (msg) card.appendChild(el("div", "err", msg));
+  app.appendChild(card);
+  const bar = el("div", "bar");
+  if (etape > 0) { const p = el("button", "btn sec", "Précédent"); p.onclick = () => { etape--; rendre(); scrollTo(0,0) }; bar.appendChild(p) }
+  const fin = etape === SECTIONS.length - 1;
+  const n = el("button", "btn pri", fin ? "Envoyer" : "Suivant");
+  n.onclick = () => {
+    if (manquants(sec).length) return rendre("Merci de répondre aux questions marquées *.");
+    if (fin) return envoyer(n);
+    etape++; rendre(); scrollTo(0,0);
+  };
+  bar.appendChild(n); app.appendChild(bar);
+  window.scrollTo(0, y);
+}
+
+async function envoyer(btn){
+  btn.disabled = true; btn.textContent = "Envoi…";
+  const data = {};
+  SECTIONS.forEach(s => s.qs.forEach(q => { if (visible(q) && R[q.id] != null && R[q.id] !== "") data[q.id] = R[q.id] }));
+  try {
+    const r = await fetch("/api/reponse", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
+    if (!r.ok) throw new Error((await r.json()).erreur || "Erreur");
+    try { localStorage.setItem("ordinaire_repondu", "1") } catch {}
+    merci();
+  } catch (e) { btn.disabled = false; btn.textContent = "Envoyer"; rendre("Envoi impossible (" + e.message + "). Vérifiez le réseau et réessayez."); }
+}
+
+function merci(){
+  document.getElementById("prog").style.width = "100%";
+  app.innerHTML = '<section class="card center"><div class="big">✓</div><h2>Merci !</h2><p class="intro">Vos réponses sont enregistrées de façon anonyme. Les résultats serviront à faire évoluer les menus des trois centres.</p></section>';
+}
+
+if (deja) app.innerHTML = '<section class="card center"><h2>Vous avez déjà répondu</h2><p class="intro">Merci pour votre participation.</p><button class="btn sec" id="re">Répondre à nouveau</button></section>', document.getElementById("re").onclick = () => rendre();
+else rendre();
+</script>
+</body>
+</html>

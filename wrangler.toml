@@ -1,0 +1,11 @@
+name = "questionnaire-ordinaire"
+main = "src/worker.js"
+compatibility_date = "2026-10-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[kv_namespaces]]
+binding = "REPONSES"
+id = "8e4707792f544fb3a671398c9b5587fa"
