@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Questionnaire ordinaire</title>
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icone-180.png">
+<meta name="theme-color" content="#00a04a">
 <link rel="stylesheet" href="style.css">
 <style>
 .etape{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin:-6px 0 12px}
@@ -12,7 +15,7 @@
 .menu h3:first-child{margin-top:0}
 .plat{border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:8px 11px;font:inherit;font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:left}
 .plat.plus{background:#e3f3e9;border-color:var(--ok);color:#174d2e}
-.plat.moins{background:var(--accent-soft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.plat.moins{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
 @media (prefers-color-scheme:dark){.plat.plus{background:#163223;color:#9fe0b8}}
 .menu .row{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
 .welcome .big{font-size:48px}
@@ -23,8 +26,8 @@
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="badge">6e</div>
-    <div><h1>Votre avis sur l'ordinaire</h1><p class="sub">Anonyme · 5 minutes · Grenelle, Auteuil, Issy</p></div>
+    <img class="logo" src="logo.svg" alt="" width="46" height="54">
+    <div><h1>L'ordinaire, votre avis</h1><p class="sub">Anonyme · 5 minutes · Grenelle, Auteuil, Issy</p></div>
   </header>
   <div class="prog"><i id="prog"></i></div>
   <main id="app"></main>
