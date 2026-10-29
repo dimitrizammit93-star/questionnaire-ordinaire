@@ -47,7 +47,6 @@ window.SECTIONS = [
   ]},
   { titre: "🏁 Dernière ligne droite", qs: [
     { id: "cuisines", t: "Vous voulez voir plus souvent…", type: "check", o: ["🍖 Grillades", "🐟 Poisson", "🥘 Oriental / méditerranéen", "🍜 Asiatique", "🌮 Tex-mex", "🥗 Salades composées", "💪 Plats protéinés sportifs", "🍲 Plats traditionnels"] },
-    { id: "regimes", t: "Vos besoins alimentaires", type: "check", x: "Aucun", o: ["Halal", "Sans porc", "Végétarien", "Allergie / intolérance", "Aucun"] },
     { id: "global", t: "Note globale de l'ordinaire", type: "scale10", req: 1 },
     { id: "nouveau", t: "Le plat que vous rêvez de voir arriver", type: "text" },
     { id: "priorite", t: "La chose à changer en priorité", type: "text" }
