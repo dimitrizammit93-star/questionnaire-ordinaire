@@ -10,9 +10,8 @@ async function empreinte(code) {
   const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: sel, iterations: 100000 }, cle, 256);
   return [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, "0")).join("");
 }
-// À tenir à jour si tu ajoutes une question dans public/config.js
-const CHAMPS = ["cs", "cat", "freq", "repas", "n_pdj", "n_dej", "n_din", "faim", "manque", "chaud", "reste",
-  "preferes", "retirer", "cuisines", "regimes", "sportif", "pdj_manque", "rupture", "global", "priorite", "commentaire"];
+// Seules les clés au format des identifiants de questions (lettres, chiffres, _) sont gardées.
+const CLE_OK = /^[a-z][a-z0-9_]{0,24}$/;
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
 
@@ -56,7 +55,7 @@ export default {
       const propre = nettoyer(data);
       if (!propre || !CENTRES.includes(propre.cs)) return json({ erreur: "Centre de secours manquant" }, 400);
       const r = {};
-      for (const k of CHAMPS) if (k in propre) r[k] = propre[k]; // seuls les champs du questionnaire sont gardés
+      for (const k of Object.keys(propre)) if (CLE_OK.test(k) && k !== "ts") r[k] = propre[k]; // seuls les champs du questionnaire sont gardés
       r.ts = new Date().toISOString(); // aucune IP ni identifiant stocké
       const cle = `r:${r.ts}:${crypto.randomUUID().slice(0, 8)}`;
       await env.REPONSES.put(cle, JSON.stringify(r));

@@ -5,34 +5,48 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Questionnaire ordinaire</title>
 <link rel="stylesheet" href="style.css">
+<style>
+.etape{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin:-6px 0 12px}
+.menu{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:4px}
+.menu h3{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 8px}
+.menu h3:first-child{margin-top:0}
+.plat{border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:8px 11px;font:inherit;font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:left}
+.plat.plus{background:#e3f3e9;border-color:var(--ok);color:#174d2e}
+.plat.moins{background:var(--accent-soft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+@media (prefers-color-scheme:dark){.plat.plus{background:#163223;color:#9fe0b8}}
+.menu .row{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.welcome .big{font-size:48px}
+.welcome ul{text-align:left;margin:14px auto;padding-left:20px;max-width:340px;color:var(--muted)}
+</style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
     <div class="badge">6e</div>
-    <div><h1>Votre avis sur l'ordinaire</h1><p class="sub">Anonyme · 5 minutes · Grenelle, Auteuil, Issy</p></div>
+    <div><h1>Votre avis sur l'ordinaire</h1><p class="sub">Anonyme · 4 minutes · Grenelle, Auteuil, Issy</p></div>
   </header>
   <div class="prog"><i id="prog"></i></div>
   <main id="app"></main>
 </div>
 <script src="config.js"></script>
 <script>
-const R = {}; let etape = 0;
+const R = {}; let etape = -1;
 const app = document.getElementById("app");
 const deja = (() => { try { return localStorage.getItem("ordinaire_repondu") } catch { return null } })();
+const ENCOURAGE = ["", "C'est parti 💪", "Bien joué, continuez", "La moitié est faite 👏", "Plus que quelques questions", "Presque fini !", "Dernière étape 🏁"];
 
-function visible(q){ return !q.show || (R.repas || []).includes(q.show) }
+const ok = s => !s.show || s.show(R);
+const etapes = () => SECTIONS.filter(ok);
 function el(tag, cls, txt){ const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e }
-
-function pill(label, on, fn){ const b = el("button", "opt" + (on ? " on" : ""), label); b.type = "button"; b.onclick = fn; return b }
+function pill(label, on, fn, cls = "opt"){ const b = el("button", cls + (on ? " on" : ""), label); b.type = "button"; b.onclick = fn; return b }
 
 function rendreQuestion(q){
   const box = el("div", "q");
-  const t = el("div", "qt", q.t); if (q.req) { const s = el("span", "req", " *"); t.appendChild(s) }
+  const t = el("div", "qt", q.t); if (q.req) t.appendChild(el("span", "req", " *"));
   box.appendChild(t);
   if (q.type === "radio") {
     const o = el("div", "opts");
-    q.o.forEach(x => o.appendChild(pill(x, R[q.id] === x, () => { R[q.id] = x; rendre() })));
+    q.o.forEach(x => o.appendChild(pill(x, R[q.id] === x, () => { R[q.id] = R[q.id] === x ? undefined : x; rendre() })));
     box.appendChild(o);
   } else if (q.type === "check") {
     const o = el("div", "opts"), cur = R[q.id] || [];
@@ -55,31 +69,68 @@ function rendreQuestion(q){
     const s = el("div", "scale10");
     for (let n = 1; n <= 10; n++) s.appendChild(pill(String(n), R[q.id] === n, () => { R[q.id] = n; rendre() }));
     box.appendChild(s);
+  } else if (q.type === "menu") {
+    const cur = R[q.id] || { plus: [], moins: [] };
+    const m = el("div", "menu");
+    [["☀️ Midi", q.midi], ["🌙 Soir", q.soir]].forEach(([titre, plats]) => {
+      m.appendChild(el("h3", "", titre));
+      const o = el("div", "opts");
+      plats.forEach(p => {
+        const etat = cur.plus.includes(p) ? "plus" : cur.moins.includes(p) ? "moins" : "";
+        const b = el("button", "plat " + etat, (etat === "plus" ? "👍 " : etat === "moins" ? "👎 " : "") + p);
+        b.type = "button";
+        b.onclick = () => {
+          const v = { note: cur.note, plus: cur.plus.filter(x => x !== p), moins: cur.moins.filter(x => x !== p) };
+          if (etat === "") v.plus.push(p); else if (etat === "plus") v.moins.push(p);
+          R[q.id] = v; rendre();
+        };
+        o.appendChild(b);
+      });
+      m.appendChild(o);
+    });
+    const row = el("div", "row"); row.appendChild(el("span", "", "Note de la semaine"));
+    const s = el("div", "scale");
+    [1,2,3,4,5].forEach(n => s.appendChild(pill(String(n), cur.note === n, () => { R[q.id] = { ...cur, note: n }; rendre() })));
+    row.appendChild(s); m.appendChild(row);
+    box.appendChild(m);
   } else {
-    const ta = el("textarea"); ta.value = R[q.id] || ""; ta.maxLength = 1000;
+    const ta = el("textarea"); ta.value = R[q.id] || ""; ta.maxLength = 1000; ta.placeholder = "Facultatif";
     ta.oninput = () => { R[q.id] = ta.value };
     box.appendChild(ta);
   }
   return box;
 }
 
-function manquants(sec){ return sec.qs.filter(q => q.req && visible(q) && (R[q.id] == null || (Array.isArray(R[q.id]) && !R[q.id].length))) }
+const vide = v => v == null || v === "" || (Array.isArray(v) && !v.length);
+function manquants(sec){ return sec.qs.filter(q => q.req && ok(q) && vide(R[q.id])) }
+
+function accueil(){
+  document.getElementById("prog").style.width = "0%";
+  app.innerHTML = `<section class="card center welcome"><div class="big">🍽️</div><h2>La cuisine vous écoute</h2>
+    <p class="intro">Les repas font parler, et c'est normal. On veut s'améliorer, et pour ça on a besoin de vous.</p>
+    <ul><li>4 minutes, presque que des boutons</li><li>100 % anonyme</li><li>Les résultats seront affichés et serviront à refaire les menus</li></ul>
+    <button class="btn pri" id="go" style="width:100%">Je donne mon avis</button></section>`;
+  document.getElementById("go").onclick = () => { etape = 0; rendre(); scrollTo(0, 0) };
+}
 
 function rendre(msg){
   const y = window.scrollY;
+  const E = etapes(); if (etape >= E.length) etape = E.length - 1;
   app.innerHTML = "";
-  document.getElementById("prog").style.width = (etape / SECTIONS.length * 100) + "%";
-  const sec = SECTIONS[etape];
+  document.getElementById("prog").style.width = ((etape + 1) / (E.length + 1) * 100) + "%";
+  const info = el("div", "etape"); info.appendChild(el("span", "", `Étape ${etape + 1} / ${E.length}`)); info.appendChild(el("span", "", ENCOURAGE[Math.min(etape, ENCOURAGE.length - 1)] || ""));
+  app.appendChild(info);
+  const sec = E[etape];
   const card = el("section", "card");
   card.appendChild(el("h2", "", sec.titre));
   if (sec.intro) card.appendChild(el("p", "intro", sec.intro));
-  sec.qs.filter(visible).forEach(q => card.appendChild(rendreQuestion(q)));
+  sec.qs.filter(ok).forEach(q => card.appendChild(rendreQuestion(q)));
   if (msg) card.appendChild(el("div", "err", msg));
   app.appendChild(card);
   const bar = el("div", "bar");
   if (etape > 0) { const p = el("button", "btn sec", "Précédent"); p.onclick = () => { etape--; rendre(); scrollTo(0,0) }; bar.appendChild(p) }
-  const fin = etape === SECTIONS.length - 1;
-  const n = el("button", "btn pri", fin ? "Envoyer" : "Suivant");
+  const fin = etape === E.length - 1;
+  const n = el("button", "btn pri", fin ? "Envoyer ✓" : "Suivant");
   n.onclick = () => {
     if (manquants(sec).length) return rendre("Merci de répondre aux questions marquées *.");
     if (fin) return envoyer(n);
@@ -92,22 +143,22 @@ function rendre(msg){
 async function envoyer(btn){
   btn.disabled = true; btn.textContent = "Envoi…";
   const data = {};
-  SECTIONS.forEach(s => s.qs.forEach(q => { if (visible(q) && R[q.id] != null && R[q.id] !== "") data[q.id] = R[q.id] }));
+  etapes().forEach(s => s.qs.forEach(q => { if (ok(q) && !vide(R[q.id])) data[q.id] = R[q.id] }));
   try {
     const r = await fetch("/api/reponse", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
     if (!r.ok) throw new Error((await r.json()).erreur || "Erreur");
     try { localStorage.setItem("ordinaire_repondu", "1") } catch {}
     merci();
-  } catch (e) { btn.disabled = false; btn.textContent = "Envoyer"; rendre("Envoi impossible (" + e.message + "). Vérifiez le réseau et réessayez."); }
+  } catch (e) { btn.disabled = false; btn.textContent = "Envoyer ✓"; rendre("Envoi impossible (" + e.message + "). Vérifiez le réseau et réessayez."); }
 }
 
 function merci(){
   document.getElementById("prog").style.width = "100%";
-  app.innerHTML = '<section class="card center"><div class="big">✓</div><h2>Merci !</h2><p class="intro">Vos réponses sont enregistrées de façon anonyme. Les résultats serviront à faire évoluer les menus des trois centres.</p></section>';
+  app.innerHTML = '<section class="card center"><div class="big">🙌</div><h2>Merci, c\'est envoyé !</h2><p class="intro">Vos réponses sont anonymes. Les résultats seront partagés à la compagnie et serviront à refaire les menus des trois centres.</p></section>';
 }
 
-if (deja) app.innerHTML = '<section class="card center"><h2>Vous avez déjà répondu</h2><p class="intro">Merci pour votre participation.</p><button class="btn sec" id="re">Répondre à nouveau</button></section>', document.getElementById("re").onclick = () => rendre();
-else rendre();
+if (deja) app.innerHTML = '<section class="card center"><h2>Vous avez déjà répondu 👍</h2><p class="intro">Merci pour votre participation.</p><button class="btn sec" id="re">Répondre à nouveau</button></section>', document.getElementById("re").onclick = accueil;
+else accueil();
 </script>
 </body>
 </html>
