@@ -2,8 +2,8 @@
 const CENTRES = ["Grenelle", "Auteuil", "Issy-les-Moulineaux"];
 // Code d'accès aux résultats : seule son empreinte est ici (le code lui-même n'est pas dans le dépôt).
 // Un secret ADMIN_TOKEN ajouté dans Cloudflare, s'il existe, remplace ce code.
-const CODE_SEL = "23f064b06e4c07bfe37b4a923598c56d";
-const CODE_EMPREINTE = "c4428abed93e608f12d5c732e8b14183e323b9d99990b304ea7269e36258e9db";
+const CODE_SEL = "6af69fee7b8a29ea2c73a646f2597b9b";
+const CODE_EMPREINTE = "5bec5399c5fed928ffde527ba9f1e669a4e0ff9e84a25293352264e667b64c44";
 async function empreinte(code) {
   const cle = await crypto.subtle.importKey("raw", new TextEncoder().encode(code), "PBKDF2", false, ["deriveBits"]);
   const sel = Uint8Array.from(CODE_SEL.match(/../g), x => parseInt(x, 16));
