@@ -1,4 +1,4 @@
-name = "questionnaire-6cie"
+name = "questionnaire-ordinaire"
 main = "src/worker.js"
 compatibility_date = "2026-10-01"
 
