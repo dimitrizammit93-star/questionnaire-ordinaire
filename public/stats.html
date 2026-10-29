@@ -149,6 +149,10 @@ function rendre(){
   SECTIONS.forEach(s => s.qs.forEach(q => {
     if (q.type === "menu") h += `<section class="card"><h2>🗓️ ${esc(q.t)}</h2>${menuStats(q, rows)}</section>`;
     if (["radio", "check"].includes(q.type) && q.id !== "cs") h += `<section class="card"><h2>${esc(q.t)}</h2>${barres(q, rows)}</section>`;
+    if (q.type === "multitext") {
+      const t = rows.filter(r => r[q.id]).slice().reverse();
+      h += `<section class="card"><h2>${esc(q.t)}</h2>${t.length ? `<ul class="txt">${t.map(r => `<li>${q.c.map(c => `<b>${esc(c)} :</b> ${esc(r[q.id][c] || "–")}`).join(" · ")} <small>· ${esc(r.cs)}</small></li>`).join("")}</ul>` : "<p class='intro'>Pas encore de réponse.</p>"}</section>`;
+    }
     if (q.type === "text") {
       const t = rows.filter(r => r[q.id]).slice().reverse();
       h += `<section class="card"><h2>${esc(q.t)}</h2>${t.length ? `<ul class="txt">${t.map(r => `<li>${esc(r[q.id])} <small>· ${esc(r.cs)}</small></li>`).join("")}</ul>` : "<p class='intro'>Pas encore de réponse.</p>"}</section>`;
@@ -163,11 +167,13 @@ function rendre(){
 function exporter(){
   const cols = ["date"];
   SECTIONS.forEach(s => s.qs.forEach(q => q.type === "notes" ? q.c.forEach(c => cols.push(q.t + " - " + c))
+    : q.type === "multitext" ? q.c.forEach(c => cols.push(q.t + " - " + c))
     : q.type === "menu" ? cols.push(q.t + " - note", q.t + " - aimés", q.t + " - à retirer") : cols.push(q.t)));
   const lignes = DATA.map(r => {
     const l = [new Date(r.ts).toLocaleString("fr-FR")];
     SECTIONS.forEach(s => s.qs.forEach(q => {
       if (q.type === "notes") q.c.forEach(c => l.push(r[q.id]?.[c] ?? ""));
+      else if (q.type === "multitext") q.c.forEach(c => l.push(r[q.id]?.[c] ?? ""));
       else if (q.type === "menu") l.push(r[q.id]?.note ?? "", (r[q.id]?.plus || []).join(" | "), (r[q.id]?.moins || []).join(" | "));
       else l.push(Array.isArray(r[q.id]) ? r[q.id].join(" | ") : (r[q.id] ?? ""));
     }));

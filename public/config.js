@@ -18,12 +18,20 @@ window.SECTIONS = [
   { titre: "🍝 Quantités", qs: [
     { id: "faim", t: "Vous restez sur votre faim…", type: "radio", o: ["Jamais", "Parfois", "Souvent"] },
     { id: "manque", t: "Ce qui manque le plus dans l'assiette", type: "check", x: "Rien", o: ["🥩 Viande / poisson", "🍚 Féculents", "🥦 Légumes", "🥖 Pain", "🍰 Dessert", "Rien"] },
-    { id: "reste", t: "Il en reste assez pour ceux qui rentrent d'inter ?", type: "radio", o: ["Toujours", "Souvent", "Rarement", "Jamais"] }
+    { id: "reste", t: "Il en reste assez pour ceux qui rentrent d'inter ?", type: "radio", o: ["Toujours", "Souvent", "Rarement", "Jamais"] },
+    { id: "complete", t: "Vous complétez votre repas avec…", type: "check", x: "🙅 Rien", o: ["🥤 La buvette", "🛵 Une commande extérieure", "🥡 Ce que j'apporte de chez moi", "🙅 Rien"] }
+  ]},
+  { titre: "🚐 Spécial satellites", intro: "Cette étape n'apparaît que pour Auteuil et Issy.", show: R => R.cs && R.cs !== "Grenelle", qs: [
+    { id: "sat_heure", t: "Le repas arrive…", type: "radio", o: ["⏰ À l'heure", "🐢 Souvent en retard", "🏃 Trop tôt, il a le temps de refroidir"] },
+    { id: "sat_etat", t: "À l'arrivée, il est souvent…", type: "check", x: "✅ Nickel", o: ["🥶 Froid ou tiède", "🏜️ Sec", "🥣 Mélangé / écrasé", "💦 Renversé / abîmé", "✅ Nickel"] },
+    { id: "sat_manque", t: "Ce qui manque le plus souvent dans la livraison", type: "check", x: "Rien", o: ["🥖 Pain", "🥫 Sauce", "🥗 Entrée", "🍰 Dessert", "🍴 Couverts / contenants", "Rien"] },
+    { id: "sat_qte", t: "La quantité livrée suffit pour tout l'effectif ?", type: "radio", o: ["Toujours", "Souvent", "Rarement", "Jamais"] }
   ]},
   { titre: "🔧 Vos choix", intro: "Un toucher par question, c'est vous qui décidez.", qs: [
     { id: "feculents", t: "Pâtes, riz, semoule, blé : vous en voulez…", type: "radio", o: ["Midi et soir", "Une fois par jour suffit", "Pas forcément tous les jours"] },
     { id: "midisoir", t: "Féculents le midi, légumes le soir : ça vous va ?", type: "radio", o: ["👍 Oui", "👎 Non, féculents aussi le soir", "🤝 Les deux le soir"] },
     { id: "dessert", t: "Côté dessert, vous êtes plutôt…", type: "radio", o: ["🍎 Fruits", "🍰 Pâtisserie / gâteau", "🥛 Yaourt / laitage", "🔄 Un peu de tout"] },
+    { id: "entrees", t: "Les entrées, vous les mangez ?", type: "radio", o: ["Toujours", "Parfois", "Rarement"] },
     { id: "raviolis", t: "Des raviolis au menu ?", type: "radio", o: ["😍 Oui", "🤷 Pourquoi pas", "🙅 Non merci"] },
     { id: "dimanche", t: "Dimanche midi, la bavette-frites…", type: "radio", o: ["🥩 On garde !", "🔄 Une semaine sur deux", "❌ On change"] },
     { id: "dimanche_alt", t: "Vous la remplaceriez par quoi ?", type: "text", show: R => R.dimanche && R.dimanche !== "🥩 On garde !" },
@@ -47,8 +55,9 @@ window.SECTIONS = [
   ]},
   { titre: "🏁 Dernière ligne droite", qs: [
     { id: "cuisines", t: "Vous voulez voir plus souvent…", type: "check", o: ["🍖 Grillades", "🐟 Poisson", "🥘 Oriental / méditerranéen", "🍜 Asiatique", "🌮 Tex-mex", "🥗 Salades composées", "💪 Plats protéinés sportifs", "🍲 Plats traditionnels"] },
+    { id: "theme", t: "Un repas à thème une fois par mois ? Votez", type: "check", x: "🙅 Pas intéressé", o: ["🍔 Burger", "🥘 Couscous", "🍖 Barbecue", "🧀 Raclette", "🍜 Asiatique", "🌮 Tex-mex", "🙅 Pas intéressé"] },
+    { id: "chef", t: "👨‍🍳 Chef d'un jour : composez votre menu", type: "multitext", c: ["Entrée", "Plat", "Dessert"] },
     { id: "global", t: "Note globale de l'ordinaire", type: "scale10", req: 1 },
-    { id: "nouveau", t: "Le plat que vous rêvez de voir arriver", type: "text" },
     { id: "priorite", t: "La chose à changer en priorité", type: "text" }
   ]}
 ];

@@ -16,6 +16,7 @@
 @media (prefers-color-scheme:dark){.plat.plus{background:#163223;color:#9fe0b8}}
 .menu .row{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
 .welcome .big{font-size:48px}
+.champ{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px;font:inherit;background:transparent;color:var(--ink);margin-bottom:8px}
 .welcome ul{text-align:left;margin:14px auto;padding-left:20px;max-width:340px;color:var(--muted)}
 </style>
 </head>
@@ -23,7 +24,7 @@
 <div class="wrap">
   <header class="top">
     <div class="badge">6e</div>
-    <div><h1>Votre avis sur l'ordinaire</h1><p class="sub">Anonyme · 4 minutes · Grenelle, Auteuil, Issy</p></div>
+    <div><h1>Votre avis sur l'ordinaire</h1><p class="sub">Anonyme · 5 minutes · Grenelle, Auteuil, Issy</p></div>
   </header>
   <div class="prog"><i id="prog"></i></div>
   <main id="app"></main>
@@ -93,6 +94,13 @@ function rendreQuestion(q){
     [1,2,3,4,5].forEach(n => s.appendChild(pill(String(n), cur.note === n, () => { R[q.id] = { ...cur, note: n }; rendre() })));
     row.appendChild(s); m.appendChild(row);
     box.appendChild(m);
+  } else if (q.type === "multitext") {
+    const cur = R[q.id] || {};
+    q.c.forEach(c => {
+      const inp = el("input"); inp.type = "text"; inp.placeholder = c; inp.value = cur[c] || ""; inp.maxLength = 200; inp.className = "champ";
+      inp.oninput = () => { const v = { ...(R[q.id] || {}) }; if (inp.value.trim()) v[c] = inp.value; else delete v[c]; R[q.id] = Object.keys(v).length ? v : undefined };
+      box.appendChild(inp);
+    });
   } else {
     const ta = el("textarea"); ta.value = R[q.id] || ""; ta.maxLength = 1000; ta.placeholder = "Facultatif";
     ta.oninput = () => { R[q.id] = ta.value };
@@ -108,7 +116,7 @@ function accueil(){
   document.getElementById("prog").style.width = "0%";
   app.innerHTML = `<section class="card center welcome"><div class="big">🍽️</div><h2>La cuisine vous écoute</h2>
     <p class="intro">Les repas font parler, et c'est normal. On veut s'améliorer, et pour ça on a besoin de vous.</p>
-    <ul><li>4 minutes, presque que des boutons</li><li>100 % anonyme</li><li>Les résultats seront affichés et serviront à refaire les menus</li></ul>
+    <ul><li>5 minutes, presque que des boutons</li><li>100 % anonyme</li><li>Les résultats seront affichés et serviront à refaire les menus</li></ul>
     <button class="btn pri" id="go" style="width:100%">Je donne mon avis</button></section>`;
   document.getElementById("go").onclick = () => { etape = 0; rendre(); scrollTo(0, 0) };
 }
