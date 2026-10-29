@@ -27,7 +27,7 @@ window.SECTIONS = [
     { id: "sat_manque", t: "Ce qui manque le plus souvent dans la livraison", type: "check", x: "Rien", o: ["🥖 Pain", "🥫 Sauce", "🥗 Entrée", "🍰 Dessert", "Rien"] },
     { id: "sat_qte", t: "La quantité livrée suffit pour tout l'effectif ?", type: "radio", o: ["Toujours", "Souvent", "Rarement", "Jamais"] }
   ]},
-  { titre: "🔧 Vos choix", intro: "Un toucher par question, c'est vous qui décidez.", qs: [
+  { titre: "🔧 Vos choix", qs: [
     { id: "feculents", t: "Pâtes, riz, semoule, blé : vous en voulez…", type: "radio", o: ["Midi et soir", "Une fois par jour suffit", "Pas forcément tous les jours"] },
     { id: "midisoir", t: "Féculents le midi, légumes le soir : ça vous va ?", type: "radio", o: ["👍 Oui", "🍝 Non, féculents aussi le soir", "🤝 Féculents et légumes, midi et soir"] },
     { id: "dessert", t: "Côté dessert, vous êtes plutôt…", type: "radio", o: ["🍎 Fruits", "🍰 Pâtisserie / gâteau", "🥛 Yaourt / laitage", "🔄 Un peu de tout"] },

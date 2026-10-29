@@ -18,9 +18,11 @@
 .plat.moins{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
 @media (prefers-color-scheme:dark){.plat.plus{background:#163223;color:#9fe0b8}}
 .menu .row{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
-.welcome .big{font-size:48px}
 .champ{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px;font:inherit;background:transparent;color:var(--ink);margin-bottom:8px}
-.welcome ul{text-align:left;margin:14px auto;padding-left:20px;max-width:340px;color:var(--muted)}
+.welcome p{margin:0 0 12px}
+.welcome .logo-accueil{display:block;width:84px;height:auto;margin:4px auto 14px}
+.welcome h2{text-align:center;margin-bottom:14px}
+.welcome .signature{color:var(--muted);font-style:italic;margin:16px 0 18px}
 </style>
 </head>
 <body>
@@ -37,7 +39,7 @@
 const R = {}; let etape = -1;
 const app = document.getElementById("app");
 const deja = (() => { try { return localStorage.getItem("ordinaire_repondu") } catch { return null } })();
-const ENCOURAGE = ["", "C'est parti 💪", "Bien joué, continuez", "La moitié est faite 👏", "Plus que quelques questions", "Presque fini !", "Dernière étape 🏁"];
+const ENCOURAGE = [];
 
 const ok = s => !s.show || s.show(R);
 const etapes = () => SECTIONS.filter(ok);
@@ -117,10 +119,13 @@ function manquants(sec){ return sec.qs.filter(q => q.req && ok(q) && vide(R[q.id
 
 function accueil(){
   document.getElementById("prog").style.width = "0%";
-  app.innerHTML = `<section class="card center welcome"><div class="big">🍽️</div><h2>La cuisine vous écoute</h2>
-    <p class="intro">Les repas font parler, et c'est normal. On veut s'améliorer, et pour ça on a besoin de vous.</p>
-    <ul><li>5 minutes, presque que des boutons</li><li>100 % anonyme</li><li>Les résultats seront affichés et serviront à refaire les menus</li></ul>
-    <button class="btn pri" id="go" style="width:100%">Je donne mon avis</button></section>`;
+  app.innerHTML = `<section class="card welcome">
+    <img class="logo-accueil" src="logo.svg" alt="Ordinaire 6e compagnie">
+    <h2>L'ordinaire, on en parle tous</h2>
+    <p>Au bureau RHL, on a entendu les remarques sur les repas, à Grenelle comme dans les satellites. Plutôt que d'en discuter à table, on veut des retours précis pour retravailler les menus avec la cuisine.</p>
+    <p>Le questionnaire est anonyme et prend 5 minutes. Les résultats seront présentés à la compagnie, avec ce qui va changer.</p>
+    <p class="signature">Le bureau RHL · CS Grenelle</p>
+    <button class="btn pri" id="go" style="width:100%">Commencer</button></section>`;
   document.getElementById("go").onclick = () => { etape = 0; rendre(); scrollTo(0, 0) };
 }
 
@@ -165,7 +170,7 @@ async function envoyer(btn){
 
 function merci(){
   document.getElementById("prog").style.width = "100%";
-  app.innerHTML = '<section class="card center"><div class="big">🙌</div><h2>Merci, c\'est envoyé !</h2><p class="intro">Vos réponses sont anonymes. Les résultats seront partagés à la compagnie et serviront à refaire les menus des trois centres.</p></section>';
+  app.innerHTML = '<section class="card center"><h2>Merci, c\'est enregistré</h2><p class="intro">Les résultats seront présentés à la compagnie, avec ce qui change dans les menus.</p><p class="intro"><i>Le bureau RHL</i></p></section>';
 }
 
 if (deja) app.innerHTML = '<section class="card center"><h2>Vous avez déjà répondu 👍</h2><p class="intro">Merci pour votre participation.</p><button class="btn sec" id="re">Répondre à nouveau</button></section>', document.getElementById("re").onclick = accueil;
