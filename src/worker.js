@@ -1,5 +1,15 @@
 // Worker Cloudflare : enregistre les réponses (anonymes) dans KV et les sert à la page stats protégée par code.
 const CENTRES = ["Grenelle", "Auteuil", "Issy-les-Moulineaux"];
+// Code d'accès aux résultats : seule son empreinte est ici (le code lui-même n'est pas dans le dépôt).
+// Un secret ADMIN_TOKEN ajouté dans Cloudflare, s'il existe, remplace ce code.
+const CODE_SEL = "23f064b06e4c07bfe37b4a923598c56d";
+const CODE_EMPREINTE = "c4428abed93e608f12d5c732e8b14183e323b9d99990b304ea7269e36258e9db";
+async function empreinte(code) {
+  const cle = await crypto.subtle.importKey("raw", new TextEncoder().encode(code), "PBKDF2", false, ["deriveBits"]);
+  const sel = Uint8Array.from(CODE_SEL.match(/../g), x => parseInt(x, 16));
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: sel, iterations: 100000 }, cle, 256);
+  return [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
 // À tenir à jour si tu ajoutes une question dans public/config.js
 const CHAMPS = ["cs", "cat", "freq", "repas", "n_pdj", "n_dej", "n_din", "faim", "manque", "chaud", "reste",
   "preferes", "retirer", "cuisines", "regimes", "sportif", "pdj_manque", "rupture", "global", "priorite", "commentaire"];
@@ -54,10 +64,10 @@ export default {
     }
 
     if (url.pathname === "/api/reponses" && request.method === "GET") {
-      const attendu = String(env.ADMIN_TOKEN || "").trim().toLowerCase();
       const recu = decodeURIComponent(request.headers.get("x-code") || "").trim().toLowerCase();
-      if (!attendu) return json({ erreur: "ADMIN_TOKEN absent sur ce Worker" }, 401);
-      if (recu !== attendu) return json({ erreur: "Code incorrect" }, 401);
+      const attendu = String(env.ADMIN_TOKEN || "").trim().toLowerCase();
+      const ok = attendu ? recu === attendu : (recu && await empreinte(recu) === CODE_EMPREINTE);
+      if (!ok) return json({ erreur: "Code incorrect" }, 401);
       return json(await toutesLesReponses(env.REPONSES));
     }
 
