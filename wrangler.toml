@@ -1,6 +1,7 @@
 name = "questionnaire-ordinaire"
 main = "src/worker.js"
 compatibility_date = "2026-10-01"
+keep_vars = true # garde les variables ajoutées dans le tableau de bord
 
 [assets]
 directory = "./public"

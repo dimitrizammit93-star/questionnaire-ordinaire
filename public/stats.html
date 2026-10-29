@@ -50,7 +50,7 @@ const fmt = (v, d = 1) => v == null ? "–" : v.toFixed(d).replace(".", ",");
 function couleur(v, max = 5){ if (v == null) return ""; const r = v / max; return r >= .7 ? "var(--ok)" : r >= .5 ? "var(--warn)" : "var(--bad)" }
 
 function login(msg){
-  app.innerHTML = `<section class="card"><h2>Code d'accès</h2><input type="password" id="code" placeholder="Code" autocomplete="current-password"><button class="btn pri" id="go" style="width:100%">Voir les résultats</button>${msg ? `<div class="err">${esc(msg)}</div>` : ""}</section>`;
+  app.innerHTML = `<section class="card"><h2>Code d'accès</h2><input type="password" id="code" placeholder="Code" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="btn pri" id="go" style="width:100%">Voir les résultats</button>${msg ? `<div class="err">${esc(msg)}</div>` : ""}</section>`;
   const go = () => charger(document.getElementById("code").value);
   document.getElementById("go").onclick = go;
   document.getElementById("code").onkeydown = e => { if (e.key === "Enter") go() };
@@ -58,8 +58,8 @@ function login(msg){
 
 async function charger(code){
   try {
-    const r = await fetch("/api/reponses", { headers: { "x-code": code } });
-    if (r.status === 401) return login("Code incorrect.");
+    const r = await fetch("/api/reponses", { headers: { "x-code": encodeURIComponent(code.trim()) } });
+    if (r.status === 401) { try { sessionStorage.removeItem("code") } catch {} return login((await r.json().catch(() => ({}))).erreur || "Code incorrect."); }
     if (!r.ok) throw new Error(r.status);
     DATA = await r.json();
     try { sessionStorage.setItem("code", code) } catch {}

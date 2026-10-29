@@ -54,7 +54,10 @@ export default {
     }
 
     if (url.pathname === "/api/reponses" && request.method === "GET") {
-      if (!env.ADMIN_TOKEN || request.headers.get("x-code") !== env.ADMIN_TOKEN) return json({ erreur: "Code incorrect" }, 401);
+      const attendu = String(env.ADMIN_TOKEN || "").trim().toLowerCase();
+      const recu = decodeURIComponent(request.headers.get("x-code") || "").trim().toLowerCase();
+      if (!attendu) return json({ erreur: "ADMIN_TOKEN absent sur ce Worker" }, 401);
+      if (recu !== attendu) return json({ erreur: "Code incorrect" }, 401);
       return json(await toutesLesReponses(env.REPONSES));
     }
 
