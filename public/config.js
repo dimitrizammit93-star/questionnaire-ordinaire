@@ -30,7 +30,7 @@ window.SECTIONS = [
   { titre: "🔧 Vos choix", qs: [
     { id: "feculents", t: "Pâtes, riz, semoule, blé : vous en voulez…", type: "radio", o: ["Midi et soir", "Une fois par jour suffit", "Pas forcément tous les jours"] },
     { id: "midisoir", t: "Féculents le midi, légumes le soir : ça vous va ?", type: "radio", o: ["👍 Oui", "🍝 Non, féculents aussi le soir", "🤝 Féculents et légumes, midi et soir"] },
-    { id: "dessert", t: "Côté dessert, vous êtes plutôt…", type: "radio", o: ["🍎 Fruits", "🍰 Pâtisserie / gâteau", "🥛 Yaourt / laitage", "🔄 Un peu de tout"] },
+    { id: "dessert", t: "Côté dessert, vous aimez… (plusieurs choix possibles)", type: "check", o: ["🍎 Fruits", "🍰 Pâtisserie / gâteau", "🥛 Yaourt / laitage", "🍮 Crème dessert / mousse", "🍨 Glace"] },
     { id: "entrees", t: "Les entrées, vous les mangez ?", type: "radio", o: ["Toujours", "Parfois", "Rarement"] },
     { id: "raviolis", t: "Des raviolis au menu ?", type: "radio", o: ["😍 Oui", "🤷 Pourquoi pas", "🙅 Non merci"] },
     { id: "dimanche", t: "Dimanche midi, la bavette-frites…", type: "radio", o: ["🥩 On garde !", "🔄 Une semaine sur deux", "❌ On change"] },
